@@ -1,0 +1,923 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes" />
+  <title>Prime Level Up • Free Fire</title>
+  <style>
+    /* ───────────── RESET & BASE ───────────── */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+    }
+
+    body {
+      background: #0b0d11;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      padding: 16px 12px 40px;
+    }
+
+    /* ───────────── LOADING OVERLAY ───────────── */
+    #loadingOverlay {
+      position: fixed;
+      inset: 0;
+      z-index: 99999;
+      background: #0b0d11;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      transition: opacity 0.8s ease, visibility 0.8s ease;
+    }
+    #loadingOverlay.hidden {
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+    }
+
+    /* Garena‑style red loading spinner */
+    .garena-loader {
+      position: relative;
+      width: 90px;
+      height: 90px;
+    }
+    .garena-loader .logo {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 40px;
+      font-weight: 900;
+      color: #e11d2e;
+      letter-spacing: 1px;
+      text-shadow: 0 0 40px rgba(225, 29, 46, 0.15);
+    }
+    .garena-loader .ring {
+      position: absolute;
+      inset: 0;
+      border-radius: 50%;
+      border: 4px solid rgba(225, 29, 46, 0.04);
+      border-top: 4px solid #e11d2e;
+      animation: spin 1s cubic-bezier(0.65, 0, 0.35, 1) infinite;
+      box-shadow: 0 0 60px rgba(225, 29, 46, 0.02);
+    }
+    .garena-loader .ring:nth-child(2) {
+      width: 70%;
+      height: 70%;
+      top: 15%;
+      left: 15%;
+      border-width: 3px;
+      animation-duration: 1.4s;
+      animation-direction: reverse;
+      border-top-color: #fbbf24;
+    }
+    .garena-loader .ring:nth-child(3) {
+      width: 40%;
+      height: 40%;
+      top: 30%;
+      left: 30%;
+      border-width: 2px;
+      animation-duration: 1.8s;
+      border-top-color: #fff;
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .loader-text {
+      margin-top: 30px;
+      color: #b7c0d0;
+      font-weight: 400;
+      letter-spacing: 3px;
+      font-size: 14px;
+      text-transform: uppercase;
+      background: rgba(255,255,255,0.02);
+      padding: 8px 28px;
+      border-radius: 60px;
+      border: 1px solid rgba(255,255,255,0.03);
+    }
+    .loader-text span {
+      color: #e11d2e;
+      font-weight: 600;
+    }
+
+    /* ───────────── MAIN APP ───────────── */
+    #app {
+      width: 100%;
+      max-width: 820px;
+      margin: 0 auto;
+      background: #12161c;
+      border-radius: 40px;
+      padding: 28px 24px 40px;
+      box-shadow: 0 30px 80px rgba(0,0,0,0.7), 0 0 0 1px rgba(255,255,255,0.02);
+      border: 1px solid rgba(255,255,255,0.02);
+    }
+
+    /* ───────────── TOP BAR ───────────── */
+    .top-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-bottom: 18px;
+      border-bottom: 1px solid rgba(255,255,255,0.03);
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .brand .garena-icon {
+      width: 42px;
+      height: 42px;
+      background: #e11d2e;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 900;
+      font-size: 20px;
+      color: #fff;
+      box-shadow: 0 4px 20px rgba(225,29,46,0.15);
+    }
+    .brand h1 {
+      color: #f0f4ff;
+      font-weight: 700;
+      font-size: 28px;
+      letter-spacing: -0.5px;
+    }
+    .brand h1 span {
+      background: linear-gradient(135deg, #e11d2e, #fbbf24);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .brand small {
+      color: #475a7a;
+      font-size: 13px;
+      font-weight: 300;
+      margin-left: 4px;
+    }
+    .status-badge {
+      padding: 8px 20px;
+      border-radius: 60px;
+      background: rgba(225,29,46,0.04);
+      border: 1px solid rgba(225,29,46,0.08);
+      color: #e11d2e;
+      font-size: 13px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .status-badge .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #4ade80;
+      animation: pulse-dot 2s infinite;
+    }
+    @keyframes pulse-dot {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.3; }
+    }
+
+    /* ───────────── TITLE ───────────── */
+    .page-title {
+      margin: 24px 0 4px;
+      color: #f0f4ff;
+      font-size: 26px;
+      font-weight: 700;
+    }
+    .page-title span { 
+      background: linear-gradient(135deg, #e11d2e, #fbbf24);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .page-sub {
+      color: #6a7fa0;
+      font-size: 15px;
+      margin-bottom: 28px;
+      border-left: 3px solid #e11d2e;
+      padding-left: 16px;
+    }
+
+    /* ───────────── FORM ───────────── */
+    .form-card {
+      background: rgba(255,255,255,0.01);
+      border-radius: 32px;
+      padding: 28px 26px;
+      border: 1px solid rgba(255,255,255,0.02);
+      box-shadow: 0 4px 24px rgba(0,0,0,0.15);
+    }
+
+    .form-group {
+      margin-bottom: 22px;
+    }
+    .form-group label {
+      display: block;
+      color: #889bc0;
+      font-size: 14px;
+      font-weight: 500;
+      margin-bottom: 6px;
+      letter-spacing: 0.3px;
+    }
+    .form-group label .required {
+      color: #e11d2e;
+      margin-left: 2px;
+    }
+    .form-group input,
+    .form-group select {
+      width: 100%;
+      padding: 14px 18px;
+      border-radius: 16px;
+      border: 1px solid rgba(255,255,255,0.04);
+      background: rgba(255,255,255,0.02);
+      color: #f0f4ff;
+      font-size: 16px;
+      transition: all 0.2s;
+      appearance: none;
+      -webkit-appearance: none;
+    }
+    .form-group input:focus,
+    .form-group select:focus {
+      outline: none;
+      border-color: rgba(225,29,46,0.2);
+      background: rgba(255,255,255,0.04);
+    }
+    .form-group select option {
+      background: #12161c;
+      color: #f0f4ff;
+    }
+    .form-group .hint {
+      color: #4a5a7a;
+      font-size: 12px;
+      margin-top: 4px;
+    }
+    .form-group .hint strong {
+      color: #e11d2e;
+      font-weight: 500;
+    }
+
+    /* ───────────── PRIME LEVEL BADGES ───────────── */
+    .prime-levels {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin: 4px 0 2px;
+    }
+    .prime-levels .level-badge {
+      padding: 4px 14px;
+      border-radius: 40px;
+      font-size: 12px;
+      font-weight: 500;
+      background: rgba(255,255,255,0.02);
+      border: 1px solid rgba(255,255,255,0.02);
+      color: #4a5a7a;
+    }
+    .prime-levels .level-badge.active {
+      background: rgba(225,29,46,0.04);
+      border-color: rgba(225,29,46,0.06);
+      color: #e11d2e;
+    }
+    .prime-levels .level-badge.gold {
+      background: rgba(251,191,36,0.04);
+      border-color: rgba(251,191,36,0.06);
+      color: #fbbf24;
+    }
+
+    /* ───────────── PRICE DISPLAY ───────────── */
+    .price-display {
+      background: rgba(225,29,46,0.02);
+      border-radius: 20px;
+      padding: 16px 20px;
+      border: 1px solid rgba(225,29,46,0.04);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin: 18px 0 24px;
+    }
+    .price-display .label {
+      color: #6a7fa0;
+      font-size: 14px;
+    }
+    .price-display .amount {
+      color: #fbbf24;
+      font-size: 28px;
+      font-weight: 700;
+    }
+    .price-display .amount span {
+      font-size: 18px;
+      font-weight: 400;
+      color: #6a7fa0;
+    }
+
+    /* ───────────── BUTTON ───────────── */
+    .btn-primary {
+      width: 100%;
+      padding: 16px;
+      border: none;
+      border-radius: 60px;
+      background: linear-gradient(135deg, #e11d2e, #b91c2c);
+      color: #fff;
+      font-weight: 700;
+      font-size: 18px;
+      cursor: pointer;
+      transition: all 0.2s;
+      letter-spacing: 0.5px;
+      box-shadow: 0 4px 24px rgba(225,29,46,0.08);
+    }
+    .btn-primary:hover:not(:disabled) {
+      transform: scale(1.02);
+      box-shadow: 0 8px 34px rgba(225,29,46,0.15);
+    }
+    .btn-primary:active:not(:disabled) {
+      transform: scale(0.97);
+    }
+    .btn-primary:disabled {
+      opacity: 0.3;
+      cursor: not-allowed;
+    }
+
+    /* ───────────── DISCLAIMER ───────────── */
+    .disclaimer-section {
+      margin-top: 40px;
+      padding-top: 24px;
+      border-top: 1px solid rgba(255,255,255,0.02);
+    }
+    .disclaimer-section .disclaimer-title {
+      color: #5d729c;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      margin-bottom: 10px;
+      opacity: 0.4;
+    }
+    .disclaimer-section .disclaimer-text {
+      color: #3a4f6e;
+      font-size: 12px;
+      line-height: 1.8;
+      text-align: justify;
+      font-weight: 300;
+      letter-spacing: 0.2px;
+    }
+    .disclaimer-section .disclaimer-text strong {
+      color: #5d729c;
+      font-weight: 400;
+    }
+
+    /* ───────────── FF PRIME ICONS ───────────── */
+    .ff-prime-icons {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin: 14px 0 4px;
+      padding: 10px 14px;
+      background: rgba(255,255,255,0.01);
+      border-radius: 16px;
+      border: 1px solid rgba(255,255,255,0.02);
+    }
+    .ff-prime-icons .icon {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
+      color: #6a7fa0;
+      padding: 4px 12px;
+      border-radius: 40px;
+      background: rgba(255,255,255,0.01);
+    }
+    .ff-prime-icons .icon .badge {
+      font-weight: 700;
+      font-size: 16px;
+    }
+    .ff-prime-icons .icon.prime-1 .badge { color: #4ade80; }
+    .ff-prime-icons .icon.prime-2 .badge { color: #60a5fa; }
+    .ff-prime-icons .icon.prime-3 .badge { color: #a78bfa; }
+    .ff-prime-icons .icon.prime-4 .badge { color: #f472b6; }
+    .ff-prime-icons .icon.prime-5 .badge { color: #fbbf24; }
+    .ff-prime-icons .icon.prime-6 .badge { color: #fb923c; }
+    .ff-prime-icons .icon.prime-7 .badge { color: #e11d2e; }
+    .ff-prime-icons .icon.prime-8 .badge { color: #ff6b6b; }
+
+    /* ───────────── QR MODAL ───────────── */
+    .qr-modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(2, 4, 8, 0.85);
+      backdrop-filter: blur(16px);
+      justify-content: center;
+      align-items: center;
+      z-index: 99999;
+      padding: 20px;
+    }
+    .qr-modal.open {
+      display: flex;
+    }
+    .qr-box {
+      background: #181f28;
+      border-radius: 48px;
+      padding: 36px 32px 40px;
+      max-width: 440px;
+      width: 100%;
+      text-align: center;
+      border: 1px solid rgba(255,255,255,0.02);
+      box-shadow: 0 40px 90px rgba(0,0,0,0.9);
+    }
+    .qr-box .qr-head {
+      color: #e11d2e;
+      font-weight: 600;
+      font-size: 22px;
+      margin-bottom: 2px;
+    }
+    .qr-box .qr-sub {
+      color: #6a7fa0;
+      font-size: 14px;
+      margin-bottom: 14px;
+    }
+    .qr-box .qr-detail {
+      color: #f0f4ff;
+      font-size: 18px;
+      font-weight: 500;
+      margin-bottom: 12px;
+    }
+    .qr-box .qr-detail span {
+      color: #fbbf24;
+    }
+    .qr-box img {
+      width: 100%;
+      max-width: 200px;
+      border-radius: 24px;
+      background: white;
+      padding: 10px;
+      margin: 6px auto 12px;
+      display: block;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    }
+    .qr-box .qr-status {
+      color: #6a7fa0;
+      font-size: 14px;
+      padding: 6px 16px;
+      border-radius: 40px;
+      background: rgba(255,255,255,0.02);
+      display: inline-block;
+      margin-bottom: 12px;
+    }
+    .qr-box .qr-status.pending {
+      color: #fbbf24;
+      border: 1px solid rgba(251,191,36,0.08);
+    }
+    .qr-box .close-qr {
+      margin-top: 14px;
+      background: rgba(255,255,255,0.02);
+      border: 1px solid rgba(255,255,255,0.02);
+      padding: 12px 30px;
+      border-radius: 80px;
+      color: #b7cbe5;
+      font-size: 16px;
+      cursor: pointer;
+      transition: 0.15s;
+      width: 100%;
+    }
+    .qr-box .close-qr:hover {
+      background: rgba(255,255,255,0.04);
+      color: #fff;
+    }
+    .qr-box .btn-primary {
+      margin-top: 6px;
+      padding: 14px;
+      font-size: 16px;
+      background: linear-gradient(135deg, #e11d2e, #b91c2c);
+      color: #fff;
+    }
+    .qr-box .btn-primary:hover {
+      box-shadow: 0 8px 30px rgba(225,29,46,0.15);
+    }
+    .qr-box .form-group {
+      text-align: left;
+      margin: 10px 0;
+    }
+    .qr-box .form-group input {
+      padding: 12px 16px;
+      font-size: 14px;
+    }
+    .qr-box .form-group input[type="file"] {
+      padding: 10px;
+      font-size: 13px;
+      color: #6a7fa0;
+    }
+    .qr-box .form-group input[type="file"]::file-selector-button {
+      padding: 6px 14px;
+      border: none;
+      border-radius: 40px;
+      background: rgba(225,29,46,0.08);
+      color: #e11d2e;
+      font-weight: 600;
+      cursor: pointer;
+      margin-right: 10px;
+    }
+    .qr-box .btn-secondary {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid rgba(255,255,255,0.04);
+      border-radius: 60px;
+      background: rgba(255,255,255,0.02);
+      color: #b7cbe5;
+      font-weight: 600;
+      font-size: 15px;
+      cursor: pointer;
+      transition: all 0.2s;
+      margin-top: 8px;
+    }
+    .qr-box .btn-secondary:hover {
+      background: rgba(255,255,255,0.04);
+    }
+    .hidden { display: none !important; }
+    .spinner {
+      display: inline-block;
+      width: 16px;
+      height: 16px;
+      border: 2px solid rgba(255,255,255,0.1);
+      border-top: 2px solid #e11d2e;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      vertical-align: middle;
+      margin-right: 6px;
+    }
+
+    /* ───────────── RESPONSIVE ───────────── */
+    @media (max-width: 600px) {
+      #app { padding: 16px 14px 28px; border-radius: 28px; }
+      .brand h1 { font-size: 22px; }
+      .brand .garena-icon { width: 34px; height: 34px; font-size: 16px; }
+      .page-title { font-size: 20px; }
+      .form-card { padding: 20px 16px; }
+      .price-display .amount { font-size: 22px; }
+      .qr-box { padding: 24px 16px; }
+      .ff-prime-icons { gap: 4px; }
+      .ff-prime-icons .icon { font-size: 11px; padding: 2px 8px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ════════════════════════════════════════════════ -->
+  <!--  LOADING OVERLAY (Garena‑style red spinner)    -->
+  <!-- ════════════════════════════════════════════════ -->
+  <div id="loadingOverlay">
+    <div class="garena-loader">
+      <div class="ring"></div>
+      <div class="ring"></div>
+      <div class="ring"></div>
+      <div class="logo">FF</div>
+    </div>
+    <div class="loader-text">loading <span>prime</span> server</div>
+  </div>
+
+  <!-- ════════════════════════════════════════════════ -->
+  <!--  MAIN APP                                       -->
+  <!-- ════════════════════════════════════════════════ -->
+  <div id="app">
+
+    <!-- TOP BAR -->
+    <div class="top-bar">
+      <div class="brand">
+        <div class="garena-icon">FF</div>
+        <h1>✦ <span>PRIME</span>UP</h1>
+        <small>level booster</small>
+      </div>
+      <div class="status-badge">
+        <span class="dot"></span> online • 24/7
+      </div>
+    </div>
+
+    <!-- TITLE -->
+    <div class="page-title">
+      🚀 Free Fire Prime <span>Level Up</span>
+    </div>
+    <div class="page-sub">
+      Enter your UID, select current prime, and choose target prime — pay the difference.
+    </div>
+
+    <!-- ════════ FORM ════════ -->
+    <div class="form-card">
+
+      <!-- FF Prime Icons (visual) -->
+      <div class="ff-prime-icons">
+        <span class="icon prime-1">🏅 <span class="badge">P1</span></span>
+        <span class="icon prime-2">🏅 <span class="badge">P2</span></span>
+        <span class="icon prime-3">🏅 <span class="badge">P3</span></span>
+        <span class="icon prime-4">🏅 <span class="badge">P4</span></span>
+        <span class="icon prime-5">🏅 <span class="badge">P5</span></span>
+        <span class="icon prime-6">🏅 <span class="badge">P6</span></span>
+        <span class="icon prime-7">🏅 <span class="badge">P7</span></span>
+        <span class="icon prime-8">🏅 <span class="badge">P8</span></span>
+      </div>
+
+      <div class="form-group">
+        <label>🎮 Player UID <span class="required">*</span></label>
+        <input type="text" id="uidInput" placeholder="e.g. 3707374602" maxlength="15" />
+        <div class="hint">Enter your Free Fire player ID.</div>
+      </div>
+
+      <div class="form-group">
+        <label>📊 Current Prime Level <span class="required">*</span></label>
+        <select id="currentPrime">
+          <option value="1">Prime 1</option>
+          <option value="2">Prime 2</option>
+          <option value="3" selected>Prime 3</option>
+          <option value="4">Prime 4</option>
+          <option value="5">Prime 5</option>
+          <option value="6">Prime 6</option>
+          <option value="7">Prime 7</option>
+          <option value="8">Prime 8</option>
+        </select>
+        <div class="hint">Select your current prime level.</div>
+      </div>
+
+      <div class="form-group">
+        <label>🎯 Target Prime Level <span class="required">*</span></label>
+        <select id="targetPrime">
+          <option value="1">Prime 1</option>
+          <option value="2">Prime 2</option>
+          <option value="3">Prime 3</option>
+          <option value="4" selected>Prime 4</option>
+          <option value="5">Prime 5</option>
+          <option value="6">Prime 6</option>
+          <option value="7">Prime 7</option>
+          <option value="8">Prime 8</option>
+        </select>
+        <div class="hint">Select the prime level you want to reach (must be higher than current).</div>
+      </div>
+
+      <!-- PRICE DISPLAY -->
+      <div class="price-display" id="priceDisplay">
+        <span class="label">💳 Estimated Price</span>
+        <span class="amount">₹<span id="priceAmount">0</span> <span>INR</span></span>
+      </div>
+
+      <button class="btn-primary" id="levelUpBtn">⚡ Level Up Prime</button>
+    </div>
+
+    <!-- DISCLAIMER -->
+    <div class="disclaimer-section">
+      <div class="disclaimer-title">⏤ legal & disclaimer</div>
+      <div class="disclaimer-text">
+        <strong>IMPORTANT:</strong> This is a <strong>simulation</strong> for educational and entertainment purposes only.
+        No actual prime leveling or account modification takes place.
+        All prices shown are simulated and do not represent real transactions.
+        We do not store or process any player data.
+        Use of this site is at your own risk.
+        This is not affiliated with or endorsed by Garena or Free Fire.
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ════════════════════════════════════════════════ -->
+  <!--  QR MODAL                                       -->
+  <!-- ════════════════════════════════════════════════ -->
+  <div id="qrModal" class="qr-modal">
+    <div class="qr-box">
+
+      <!-- STEP 1: QR & Payment -->
+      <div id="stepPayment">
+        <div class="qr-head">💳 scan to pay</div>
+        <div class="qr-sub">complete your prime level upgrade</div>
+        <div class="qr-detail">
+          🎯 <span id="qrPrimeFrom">Prime 3</span> → <span id="qrPrimeTo">Prime 5</span>
+        </div>
+        <div class="qr-detail">
+          ₹<span id="qrPrice">0</span> <span style="color:#6a7fa0;font-size:14px;">INR</span>
+        </div>
+        <img id="qrImage" src="qr-placeholder.png" alt="QR placeholder" />
+        <div class="qr-status pending" id="qrStatus">⏳ waiting for payment</div>
+        <button class="btn-primary" id="paidBtn">✅ I Have Paid</button>
+        <button class="close-qr" id="closeQrBtn">close</button>
+      </div>
+
+      <!-- STEP 2: Confirmation -->
+      <div id="stepConfirm" class="hidden">
+        <div class="qr-head">📋 Confirm Payment</div>
+        <div class="qr-sub">enter your payment details</div>
+
+        <div class="form-group">
+          <label>📌 UTR Number</label>
+          <input type="text" id="utrInput" placeholder="e.g. 123456789012" maxlength="12" />
+        </div>
+        <div class="form-group">
+          <label>📎 Upload Screenshot</label>
+          <input type="file" id="screenshotInput" accept="image/png,image/jpeg,image/jpg" />
+        </div>
+
+        <button class="btn-primary" id="verifyBtn">🔍 Verify Payment</button>
+        <button class="btn-secondary" id="backBtn">← Back</button>
+      </div>
+
+      <!-- STEP 3: Success -->
+      <div id="stepReveal" class="hidden">
+        <div class="qr-head" style="color:#4ade80;">✅ Prime Upgraded!</div>
+        <div class="qr-status" style="color:#4ade80;border-color:rgba(74,222,128,0.1);">🔓 level unlocked</div>
+        <div style="background:rgba(255,255,255,0.02);border-radius:20px;padding:20px;margin:12px 0 16px;border:1px solid rgba(225,29,46,0.04);">
+          <div style="color:#f0f4ff;font-size:20px;font-weight:600;">🎯 Prime <span id="finalPrimeTo" style="color:#e11d2e;">5</span></div>
+          <div style="color:#889bc0;font-size:14px;margin-top:6px;">UID: <strong id="finalUid" style="color:#f0f4ff;">3707374602</strong></div>
+          <div style="color:#6a7fa0;font-size:13px;margin-top:2px;">Status: <span style="color:#4ade80;">✅ upgraded successfully</span></div>
+        </div>
+        <button class="btn-secondary" id="doneBtn">✅ Done</button>
+        <button class="close-qr" id="closeQrBtn2">close</button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════════════ -->
+  <!--  JAVASCRIPT                                    -->
+  <!-- ════════════════════════════════════════════════ -->
+  <script>
+    // ─── PRICING TABLE ────────────────────────────────
+    const primePrices = {
+      1: 199,
+      2: 399,
+      3: 699,
+      4: 1099,
+      5: 1599,
+      6: 2199,
+      7: 2999,
+      8: 3999
+    };
+
+    // ─── DOM REFS ──────────────────────────────────────
+    const uidInput = document.getElementById('uidInput');
+    const currentPrime = document.getElementById('currentPrime');
+    const targetPrime = document.getElementById('targetPrime');
+    const priceAmount = document.getElementById('priceAmount');
+    const levelUpBtn = document.getElementById('levelUpBtn');
+
+    const qrModal = document.getElementById('qrModal');
+    const qrPrice = document.getElementById('qrPrice');
+    const qrPrimeFrom = document.getElementById('qrPrimeFrom');
+    const qrPrimeTo = document.getElementById('qrPrimeTo');
+    const qrStatus = document.getElementById('qrStatus');
+    const qrImage = document.getElementById('qrImage');
+    const paidBtn = document.getElementById('paidBtn');
+    const closeQrBtn = document.getElementById('closeQrBtn');
+    const closeQrBtn2 = document.getElementById('closeQrBtn2');
+
+    const stepPayment = document.getElementById('stepPayment');
+    const stepConfirm = document.getElementById('stepConfirm');
+    const stepReveal = document.getElementById('stepReveal');
+    const utrInput = document.getElementById('utrInput');
+    const screenshotInput = document.getElementById('screenshotInput');
+    const verifyBtn = document.getElementById('verifyBtn');
+    const backBtn = document.getElementById('backBtn');
+    const finalPrimeTo = document.getElementById('finalPrimeTo');
+    const finalUid = document.getElementById('finalUid');
+    const doneBtn = document.getElementById('doneBtn');
+
+    // ─── LOADING OVERLAY ──────────────────────────────
+    window.addEventListener('load', function() {
+      setTimeout(function() {
+        document.getElementById('loadingOverlay').classList.add('hidden');
+      }, 1200);
+    });
+
+    // ─── UPDATE PRICE ──────────────────────────────────
+    function updatePrice() {
+      const from = parseInt(currentPrime.value);
+      const to = parseInt(targetPrime.value);
+
+      if (to <= from) {
+        priceAmount.textContent = '0';
+        priceAmount.style.color = '#f87171';
+        levelUpBtn.disabled = true;
+        levelUpBtn.textContent = '⚠️ Target must be higher';
+        return;
+      }
+
+      const basePrice = primePrices[to] || 0;
+      const multiplier = 1 + (to - from) * 0.2;
+      let finalPrice = Math.round(basePrice * multiplier / 100) * 100;
+      if (finalPrice < 100) finalPrice = 100;
+
+      priceAmount.textContent = finalPrice;
+      priceAmount.style.color = '#fbbf24';
+      levelUpBtn.disabled = false;
+      levelUpBtn.textContent = '⚡ Level Up Prime';
+    }
+
+    currentPrime.addEventListener('change', updatePrice);
+    targetPrime.addEventListener('change', updatePrice);
+
+    // ─── LEVEL UP BUTTON ──────────────────────────────
+    levelUpBtn.addEventListener('click', function() {
+      const uid = uidInput.value.trim();
+      if (!uid || uid.length < 5) {
+        alert('⚠️ Please enter a valid UID (at least 5 digits).');
+        return;
+      }
+      const from = parseInt(currentPrime.value);
+      const to = parseInt(targetPrime.value);
+      if (to <= from) {
+        alert('⚠️ Target prime must be higher than current prime.');
+        return;
+      }
+
+      const price = parseInt(priceAmount.textContent);
+      if (price < 50) {
+        alert('⚠️ Invalid price. Please check your selections.');
+        return;
+      }
+
+      // Open QR modal
+      qrPrice.textContent = price;
+      qrPrimeFrom.textContent = 'Prime ' + from;
+      qrPrimeTo.textContent = 'Prime ' + to;
+      qrImage.src = 'qr-placeholder.png?t=' + Date.now();
+      qrStatus.textContent = '⏳ waiting for payment';
+      qrStatus.className = 'qr-status pending';
+      paidBtn.disabled = false;
+      paidBtn.textContent = '✅ I Have Paid';
+
+      stepPayment.classList.remove('hidden');
+      stepConfirm.classList.add('hidden');
+      stepReveal.classList.add('hidden');
+      utrInput.value = '';
+      screenshotInput.value = '';
+
+      qrModal.classList.add('open');
+    });
+
+    // ─── PAID BUTTON ───────────────────────────────────
+    paidBtn.addEventListener('click', function() {
+      stepPayment.classList.add('hidden');
+      stepConfirm.classList.remove('hidden');
+    });
+
+    // ─── BACK BUTTON ───────────────────────────────────
+    backBtn.addEventListener('click', function() {
+      stepConfirm.classList.add('hidden');
+      stepPayment.classList.remove('hidden');
+    });
+
+    // ─── VERIFY BUTTON ─────────────────────────────────
+    verifyBtn.addEventListener('click', function() {
+      const utr = utrInput.value.trim();
+      const file = screenshotInput.files[0];
+
+      if (!utr || utr.length < 6) {
+        alert('⚠️ Please enter a valid UTR number (at least 6 digits).');
+        return;
+      }
+      if (!file) {
+        alert('⚠️ Please upload a screenshot of your payment.');
+        return;
+      }
+
+      verifyBtn.disabled = true;
+      verifyBtn.innerHTML = '<span class="spinner"></span> Verifying...';
+
+      setTimeout(function() {
+        stepConfirm.classList.add('hidden');
+        stepReveal.classList.remove('hidden');
+        finalPrimeTo.textContent = 'Prime ' + parseInt(targetPrime.value);
+        finalUid.textContent = uidInput.value.trim();
+        verifyBtn.disabled = false;
+        verifyBtn.innerHTML = '🔍 Verify Payment';
+      }, 2500);
+    });
+
+    // ─── DONE BUTTON ───────────────────────────────────
+    doneBtn.addEventListener('click', function() {
+      closeModal();
+    });
+
+    // ─── CLOSE MODAL ──────────────────────────────────
+    function closeModal() {
+      qrModal.classList.remove('open');
+      stepPayment.classList.remove('hidden');
+      stepConfirm.classList.add('hidden');
+      stepReveal.classList.add('hidden');
+    }
+
+    closeQrBtn.addEventListener('click', closeModal);
+    closeQrBtn2.addEventListener('click', closeModal);
+    qrModal.addEventListener('click', function(e) {
+      if (e.target === this) closeModal();
+    });
+
+    // ─── INIT ──────────────────────────────────────────
+    updatePrice();
+    console.log('🚀 Prime Up simulation loaded.');
+  </script>
+
+</body>
+</html>
